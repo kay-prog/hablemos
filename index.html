@@ -1,0 +1,543 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<title>Hablemos</title>
+<meta name="description" content="Spanish practice: listen and repeat, then answer a tutor out loud.">
+<meta name="theme-color" content="#c2410c">
+<link rel="apple-touch-icon" href="apple-touch-icon.png">
+<link rel="icon" href="apple-touch-icon.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,600&family=Atkinson+Hyperlegible:wght@400;700&display=swap">
+<style>
+/* Layout: one phone-width column; lesson chips, Listen/Speak switch, and a fixed mic dock at the bottom */
+:root{
+  --bg:#f6f8f7; --surface:#ffffff; --fg:#1d2a26; --muted:#5f6f69; --line:#dbe3e0;
+  --accent:#c2410c; --accent-soft:#fdebe1; --on-accent:#ffffff;
+  --good:#15803d; --good-soft:#dcfce7; --warn:#b45309; --warn-soft:#fef3c7;
+  --display:"Fraunces", Georgia, serif; --body:"Atkinson Hyperlegible", system-ui, -apple-system, sans-serif;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root{
+  --bg:#121816; --surface:#1a2320; --fg:#e7eeeb; --muted:#9aaba5; --line:#2b3733;
+  --accent:#fb923c; --accent-soft:#3a2417; --on-accent:#1a1a1a;
+  --good:#4ade80; --good-soft:#123222; --warn:#fbbf24; --warn-soft:#3a2d10; color-scheme:dark}}
+*{box-sizing:border-box}
+[hidden]{display:none!important}
+html{-webkit-text-size-adjust:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font-family:var(--body);font-size:17px;line-height:1.5;
+  padding-top:env(safe-area-inset-top,0px)}
+.wrap{max-width:640px;margin:0 auto;padding-inline:16px;padding-block:20px 150px;display:grid;gap:16px}
+h1{font-family:var(--display);font-size:2rem;margin:0;line-height:1.1}
+.sub{color:var(--muted);margin:4px 0 0;font-size:.95rem}
+button{font:inherit;color:inherit;cursor:pointer}
+button:focus-visible,input:focus-visible,select:focus-visible,summary:focus-visible{outline:2px solid var(--accent);outline-offset:2px}
+
+details.settings{background:var(--surface);border:1px solid var(--line);border-radius:12px}
+details.settings summary{padding:10px 14px;font-weight:700;cursor:pointer;list-style:none}
+details.settings summary::-webkit-details-marker{display:none}
+details.settings summary::after{content:" ▾";color:var(--muted)}
+.set-grid{display:grid;gap:12px;padding:0 14px 14px}
+.set-grid label{display:grid;gap:4px;font-size:.8rem;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+.set-grid select,.set-grid input[type=text]{font:inherit;font-size:1rem;color:var(--fg);background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:8px;width:100%;text-transform:none;letter-spacing:0}
+.set-grid input[type=range]{width:100%}
+.check{display:flex!important;gap:10px;align-items:center;text-transform:none!important;letter-spacing:0!important;font-size:.95rem!important;color:var(--fg)!important}
+.check input{width:20px;height:20px;accent-color:var(--accent)}
+
+.chips{display:flex;gap:8px;overflow-x:auto;padding-bottom:4px;scrollbar-width:none}
+.chips::-webkit-scrollbar{display:none}
+.chips button{flex:none;font-weight:700;padding:8px 14px;border-radius:999px;border:1px solid var(--line);background:var(--surface);display:grid;line-height:1.25;text-align:left}
+.chips button small{font-weight:400;color:var(--muted);font-size:.75rem}
+.chips button[aria-selected="true"]{background:var(--accent-soft);border-color:var(--accent);color:var(--accent)}
+.goal{margin:0;padding:10px 14px;border-left:3px solid var(--accent);background:var(--surface);border-radius:0 10px 10px 0;font-size:.95rem}
+
+.modes{display:grid;grid-template-columns:1fr 1fr;background:var(--surface);border:1px solid var(--line);border-radius:12px;padding:4px;gap:4px}
+.modes button{border:0;background:transparent;padding:10px;border-radius:9px;font-weight:700}
+.modes button[aria-selected="true"]{background:var(--accent);color:var(--on-accent)}
+
+.warn{background:var(--warn-soft);border-radius:10px;padding:10px 12px;font-size:.92rem;margin:0}
+.listen-bar{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.primary{white-space:nowrap;border:0;border-radius:999px;padding:12px 20px;background:var(--accent);color:var(--on-accent);font-weight:700}
+.ghost{border:1px solid var(--line);background:var(--surface);border-radius:999px;padding:8px 14px;font-size:.9rem}
+ul.phrases{list-style:none;margin:0;padding:0;border-top:1px solid var(--line)}
+ul.phrases li{border-bottom:1px solid var(--line)}
+ul.phrases li button{all:unset;box-sizing:border-box;width:100%;cursor:pointer;display:grid;grid-template-columns:40px 1fr;gap:12px;align-items:center;padding:12px 4px}
+ul.phrases li button:focus-visible{outline:2px solid var(--accent);outline-offset:2px;border-radius:8px}
+.icon{width:36px;height:36px;border-radius:50%;display:grid;place-items:center;background:var(--accent-soft);color:var(--accent);font-size:.9rem}
+li.playing .icon{background:var(--accent);color:var(--on-accent)}
+.txt{min-width:0}
+.es{font-size:1.12rem;font-weight:700;display:block}
+.say{color:var(--muted);font-size:.88rem}
+.en{font-size:.88rem}
+ul.phrases li.head{border-bottom:0;padding:18px 4px 6px;font-size:.75rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+
+.card{background:var(--surface);border:1px solid var(--line);border-radius:14px;padding:16px;display:grid;gap:12px}
+.card p{margin:0}
+.convo{display:grid;gap:12px}
+.prog{display:grid;gap:6px;font-size:.85rem;color:var(--muted)}
+.track{height:6px;background:var(--line);border-radius:999px;overflow:hidden}
+.track div{height:100%;width:0;background:var(--accent);transition:width .3s}
+.bubble{padding:12px 14px;border-radius:16px;display:grid;gap:6px;min-width:0;overflow-wrap:anywhere}
+.bubble.tutor{background:var(--surface);border:1px solid var(--line);border-bottom-left-radius:4px;margin-right:24px}
+.bubble.you{background:var(--accent-soft);border-bottom-right-radius:4px;margin-left:24px}
+.who{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.bubble .es{font-size:1.25rem}
+.es.hidden-text{filter:blur(7px);user-select:none}
+.task{font-size:1.15rem;font-weight:700;color:var(--accent)}
+.task::before{content:"“"}.task::after{content:"”"}
+.heard{font-size:1.15rem}
+.muted{color:var(--muted);font-size:.95rem}
+.tools{display:flex;flex-wrap:wrap;gap:8px}
+.tools button{border:1px solid var(--line);background:var(--bg);border-radius:999px;padding:6px 12px;font-size:.88rem}
+.feedback{scroll-margin-bottom:170px;border-radius:14px;padding:14px;display:grid;gap:8px;border:1px solid var(--line);background:var(--surface)}
+.feedback.ok{border-color:var(--good);background:var(--good-soft)}
+.feedback.no{border-color:var(--warn);background:var(--warn-soft)}
+.fbt{font-weight:700;font-size:1.1rem}
+.lbl{font-size:.72rem;text-transform:uppercase;letter-spacing:.08em;color:var(--muted)}
+.model{font-size:1.15rem;line-height:1.7}
+.w{padding:1px 3px;border-radius:4px}
+.w.hit{color:var(--good);font-weight:700}
+.w.close{background:var(--warn-soft);color:var(--warn);font-weight:700;text-decoration:underline wavy}
+.w.miss{color:var(--muted);text-decoration:underline dotted}
+.legend{font-size:.8rem;color:var(--muted)}
+.typeRow{display:flex;gap:8px}
+.typeRow input{flex:1;min-width:0;font:inherit;font-size:1.05rem;padding:10px 12px;border-radius:12px;border:1px solid var(--line);background:var(--surface);color:var(--fg)}
+.score{font-family:var(--display);font-size:2.6rem;line-height:1}
+.endlist{list-style:none;margin:0;padding:0;display:grid;gap:6px}
+.endlist button{all:unset;cursor:pointer;display:flex;gap:10px;align-items:center;padding:6px 0}
+.endlist button:focus-visible{outline:2px solid var(--accent)}
+
+.dock{position:fixed;left:0;right:0;bottom:0;padding:10px 16px calc(12px + env(safe-area-inset-bottom,0px));
+  background:linear-gradient(to top,var(--bg) 70%,transparent);display:grid;justify-items:center;gap:6px;z-index:5}
+.dock-row{display:flex;align-items:center;justify-content:center;gap:18px;width:100%;max-width:640px}
+.mic{width:76px;height:76px;border-radius:50%;border:0;background:var(--accent);color:var(--on-accent);font-size:2rem;box-shadow:0 6px 18px rgba(194,65,12,.35)}
+.mic:disabled{opacity:.45}
+.mic.on{background:#dc2626;color:#fff;animation:pulse 1.2s ease-in-out infinite}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(220,38,38,.45)}50%{box-shadow:0 0 0 14px rgba(220,38,38,0)}}
+@media (prefers-reduced-motion: reduce){.mic.on{animation:none}.track div{transition:none}}
+.status{font-size:.88rem;color:var(--muted);min-height:1.3em;text-align:center}
+.tip{color:var(--muted);font-size:.9rem;margin:0}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <h1>Hablemos</h1>
+    <p class="sub">Listen and repeat, then answer your tutor out loud.</p>
+  </header>
+
+  <details class="settings" id="settings">
+    <summary>Settings</summary>
+    <div class="set-grid">
+      <label for="name">Your name<input type="text" id="name" autocomplete="given-name"></label>
+      <label for="voice">Voice<select id="voice"></select></label>
+      <label for="rate">Speed: <span id="rateVal">slow</span><input id="rate" type="range" min="0.5" max="1.1" step="0.1" value="0.8"></label>
+      <label class="check" for="showText"><input type="checkbox" id="showText" checked> Show the tutor's Spanish text (turn off for a listening challenge)</label>
+    </div>
+  </details>
+  <p class="warn" id="warn" hidden></p>
+
+  <div class="chips" role="tablist" id="chips"></div>
+  <p class="goal" id="goal"></p>
+  <div class="modes" role="tablist">
+    <button type="button" id="mListen" role="tab">🔊 Listen</button>
+    <button type="button" id="mSpeak" role="tab">🎤 Speak</button>
+  </div>
+
+  <!-- LISTEN -->
+  <section id="listen">
+    <div class="listen-bar">
+      <p class="tip">Tap a phrase, then say it out loud.</p>
+      <button type="button" class="primary" id="playAll">▶ Play all</button>
+    </div>
+    <ul class="phrases" id="list"></ul>
+  </section>
+
+  <!-- SPEAK -->
+  <section id="speak" hidden>
+    <div class="card" id="startCard">
+      <p><b>Conversation practice.</b> The tutor says a line in Spanish. Tap 🎤, answer out loud, and the app checks what it heard.</p>
+      <p class="tip">Green words were heard clearly. Amber words were close, so check your pronunciation. Grey words were missing.</p>
+      <button type="button" class="primary" id="startBtn">Start conversation</button>
+    </div>
+
+    <div id="convo" class="convo" hidden>
+      <div class="prog"><span id="progTxt"></span><div class="track"><div id="progBar"></div></div></div>
+      <div class="bubble tutor">
+        <div class="who">Tutor</div>
+        <div class="es" id="tEs"></div>
+        <div class="task" id="tTask" hidden></div>
+        <div class="en" id="tEn" hidden></div>
+        <div class="tools"><button type="button" id="replay">🔊 Replay</button><button type="button" id="enBtn">English</button></div>
+      </div>
+      <div class="bubble you">
+        <div class="who">You</div>
+        <div class="heard" id="yText"></div>
+      </div>
+      <div class="feedback" id="fb" hidden>
+        <div class="fbt" id="fbTitle"></div>
+        <div class="lbl">Model answer</div>
+        <div class="model" id="fbModel"></div>
+        <p class="tip" id="fbTip"></p>
+        <div class="tools">
+          <button type="button" id="hearBtn">🔊 Hear the answer</button>
+          <button type="button" id="skipBtn">Skip →</button>
+          <button type="button" id="nextBtn" hidden>Next →</button>
+        </div>
+      </div>
+      <div class="typeRow" id="typeRow" hidden>
+        <input id="typeIn" type="text" lang="es" autocomplete="off" autocapitalize="off" placeholder="Escribe o dicta tu respuesta…">
+        <button type="button" class="primary" id="typeGo">Check</button>
+      </div>
+    </div>
+
+    <div class="card" id="endCard" hidden>
+      <div class="lbl">Conversation finished</div>
+      <div class="score" id="endScore"></div>
+      <p id="endMsg"></p>
+      <div id="endPractice" hidden>
+        <div class="lbl">Practice these</div>
+        <ul class="endlist" id="endList"></ul>
+      </div>
+      <div class="tools"><button type="button" id="againBtn">↺ Practice again</button><button type="button" id="nextLessonBtn">Next lesson →</button></div>
+    </div>
+  </section>
+</div>
+
+<div class="dock" id="dock" hidden>
+  <div class="status" id="status" aria-live="polite"></div>
+  <div class="dock-row">
+    <button type="button" class="ghost" id="typeToggle">⌨ Type</button>
+    <button type="button" class="mic" id="mic" aria-label="Tap to answer">🎤</button>
+    <button type="button" class="ghost" id="hintBtn">💡 Hint</button>
+  </div>
+</div>
+
+<script>
+/* ================= LESSON DATA ================= */
+const LESSONS=[
+{short:"1 · Saludos",goal:"Greet someone, say your name, ask theirs, ask how they are, and say goodbye politely.",
+ items:[
+ ["Hola","OH-lah","Hello"],["Buenos días","BWEH-nohs DEE-ahs","Good morning"],["Buenas tardes","BWEH-nahs TAR-dehs","Good afternoon"],
+ ["Buenas noches","BWEH-nahs NOH-chehs","Good evening / night"],["¿Cómo estás?","KOH-moh ehs-TAHS","How are you?"],
+ ["Estoy bien, gracias","ehs-TOY bee-EHN, GRAH-see-ahs","I'm fine, thanks"],["¿Y tú?","ee TOO","And you?"],
+ ["Me llamo {name}","meh YAH-moh …","My name is {name}"],["¿Cómo te llamas?","KOH-moh teh YAH-mahs","What's your name?"],
+ ["Mucho gusto","MOO-choh GOOS-toh","Nice to meet you"],["Adiós","ah-dee-OHS","Goodbye"],["Hasta luego","AHS-tah LWEH-goh","See you later"],
+ ["Por favor","pohr fah-VOHR","Please"],["Gracias","GRAH-see-ahs","Thank you"],["De nada","deh NAH-dah","You're welcome"]],
+ script:[
+ {t:"¡{greet}! Me llamo Claude. ¿Cómo te llamas?",en:"{greetEn}! My name is Claude. What's your name?",ok:[["me llamo"],["mi nombre es"]],model:"Me llamo {name}."},
+ {t:"Mucho gusto, {name}. ¿Cómo estás?",en:"Nice to meet you, {name}. How are you?",ok:[["estoy"],["bien"]],model:"Estoy bien, gracias. ¿Y tú?"},
+ {t:"Estoy muy bien, gracias. Ahora, di en español:",en:"I'm very well, thanks. Now say in Spanish:",task:"Nice to meet you",ok:[["mucho gusto"]],model:"Mucho gusto."},
+ {t:"Di en español:",en:"Say in Spanish:",task:"Please",ok:[["por favor"]],model:"Por favor."},
+ {t:"Aquí tiene un café, {name}.",en:"Here's a coffee, {name}.",ok:[["gracias"]],model:"Gracias."},
+ {t:"Gracias por la conversación.",en:"Thanks for the conversation.",ok:[["de nada"]],model:"De nada."},
+ {t:"¿Cómo se dice, en español:",en:"How do you say, in Spanish:",task:"Good night",ok:[["buenas noches"]],model:"Buenas noches."},
+ {t:"Bueno, me voy. ¡Adiós!",en:"Well, I'm leaving. Goodbye!",ok:[["adios"],["hasta luego"]],model:"¡Hasta luego!"}]},
+{short:"2 · Números",goal:"Review Lesson 1, then count, say where you're from and where you live, say your age, and say what you like.",
+ items:[
+ "Warm-up · Lesson 1 review",
+ ["¿Cómo te llamas?","KOH-moh teh YAH-mahs","What's your name?"],["Me llamo {name}. Mucho gusto.","meh YAH-moh … MOO-choh GOOS-toh","My name is {name}. Nice to meet you."],
+ "Numbers 1–20",
+ ["uno","OO-noh","1"],["dos","dohs","2"],["tres","trehs","3"],["cuatro","KWAH-troh","4"],["cinco","SEEN-koh","5"],
+ ["seis","says","6"],["siete","see-EH-teh","7"],["ocho","OH-choh","8"],["nueve","NWEH-beh","9"],["diez","dee-EHS","10"],
+ ["once","OHN-seh","11"],["doce","DOH-seh","12"],["trece","TREH-seh","13"],["catorce","kah-TOHR-seh","14"],["quince","KEEN-seh","15"],
+ ["dieciséis","dee-eh-see-SAYS","16"],["diecisiete","dee-eh-see-see-EH-teh","17"],["dieciocho","dee-eh-see-OH-choh","18"],["diecinueve","dee-eh-see-NWEH-beh","19"],["veinte","BAYN-teh","20"],
+ "Where are you from?",
+ ["¿De dónde eres?","deh DOHN-deh EH-rehs","Where are you from?"],["Soy de Nigeria","soy deh nee-HEH-ree-ah","I'm from Nigeria"],
+ ["¿Dónde vives?","DOHN-deh BEE-behs","Where do you live?"],["Vivo en Lagos","BEE-boh ehn LAH-gohs","I live in Lagos"],
+ ["¿Cuántos años tienes?","KWAHN-tohs AH-nyohs tee-EH-nehs","How old are you?"],["Tengo cuarenta y dos años","TEHN-goh kwah-REHN-tah ee DOHS AH-nyohs","I'm 42"],
+ "What you like",
+ ["Me gusta Lagos","meh GOOS-tah LAH-gohs","I like Lagos"],["No me gusta la lluvia","noh meh GOOS-tah lah YOO-bee-ah","I don't like the rain"],
+ ["¿Te gusta el café?","teh GOOS-tah ehl kah-FEH","Do you like coffee?"],["Pero","PEH-roh","But"]],
+ script:[
+ {t:"{greet}, {name}. ¿Cómo estás?",en:"{greetEn}, {name}. How are you?",ok:[["estoy"],["bien"]],model:"Estoy bien, gracias. ¿Y tú?"},
+ {t:"Muy bien, gracias. ¿De dónde eres?",en:"Very well, thanks. Where are you from?",ok:[["soy de"]],model:"Soy de Nigeria."},
+ {t:"¿Y dónde vives?",en:"And where do you live?",ok:[["vivo en"]],model:"Vivo en Lagos."},
+ {t:"¿Cuántos años tienes?",en:"How old are you?",ok:[["tengo","anos"]],model:"Tengo cuarenta y dos años."},
+ {t:"Cuenta de uno a cinco.",en:"Count from one to five.",ok:[["uno","dos","tres","cuatro","cinco"]],model:"Uno, dos, tres, cuatro, cinco."},
+ {t:"¿Cuánto es diez más cinco?",en:"How much is ten plus five?",ok:[["quince"]],model:"Quince."},
+ {t:"¿Cuánto es diez más diez?",en:"How much is ten plus ten?",ok:[["veinte"]],model:"Veinte."},
+ {t:"¿Te gusta Lagos?",en:"Do you like Lagos?",ok:[["gusta"]],model:"Sí, me gusta Lagos."},
+ {t:"Di en español:",en:"Say in Spanish:",task:"I don't like the rain",ok:[["no me gusta","lluvia"]],model:"No me gusta la lluvia."}]},
+{short:"3 · Compras",goal:"Review Lesson 2, then use numbers up to 100, ask prices, order food and drink, and pay.",
+ items:[
+ "Warm-up · Lesson 2 review",
+ ["Soy de Nigeria. Vivo en Lagos.","soy deh nee-HEH-ree-ah. BEE-boh ehn LAH-gohs","I'm from Nigeria. I live in Lagos."],
+ ["Tengo cuarenta y dos años.","TEHN-goh kwah-REHN-tah ee DOHS AH-nyohs","I'm 42."],
+ "Numbers 21–100",
+ ["veintiuno","bayn-tee-OO-noh","21"],["veintidós","bayn-tee-DOHS","22"],["treinta","TRAYN-tah","30"],["treinta y cinco","TRAYN-tah ee SEEN-koh","35"],
+ ["cuarenta","kwah-REHN-tah","40 (not cuánto!)"],["cuarenta y ocho","kwah-REHN-tah ee OH-choh","48"],["cincuenta","seen-KWEHN-tah","50"],
+ ["sesenta","seh-SEHN-tah","60"],["setenta","seh-TEHN-tah","70"],["ochenta","oh-CHEHN-tah","80"],["noventa y nueve","noh-BEHN-tah ee NWEH-beh","99"],["cien","see-EHN","100"],
+ "Shopping",
+ ["¿Cuánto cuesta?","KWAHN-toh KWEHS-tah","How much is it?"],["Cuesta cincuenta pesos.","KWEHS-tah seen-KWEHN-tah PEH-sohs","It costs 50 pesos."],
+ ["Quiero un café, por favor.","KYEH-roh oon kah-FEH, pohr fah-VOHR","I'd like a coffee, please."],["¿Tiene agua?","tee-EH-neh AH-gwah","Do you have water?"],
+ ["¿Algo más?","AHL-goh mahs","Anything else?"],["Nada más, gracias.","NAH-dah mahs, GRAH-see-ahs","Nothing else, thanks."],
+ ["Es muy caro.","ehs mwee KAH-roh","It's very expensive."],["Es barato.","ehs bah-RAH-toh","It's cheap."],
+ ["La cuenta, por favor.","lah KWEHN-tah, pohr fah-VOHR","The bill, please."],["Aquí tiene.","ah-KEE tee-EH-neh","Here you are."],
+ "Hungry and thirsty",
+ ["¿Tiene sed?","tee-EH-neh sehd","Are you thirsty? (polite)"],["Sí, tengo sed.","see, TEHN-goh sehd","Yes, I'm thirsty."],
+ ["Tengo hambre.","TEHN-goh AHM-breh","I'm hungry."],["Quiero agua, por favor.","KYEH-roh AH-gwah, pohr fah-VOHR","I'd like water, please."],
+ "Food and drink",
+ ["el pan","ehl pahn","bread"],["el arroz","ehl ah-ROHS","rice"],["el pollo","ehl POH-yoh","chicken"],
+ ["el pescado","ehl pehs-KAH-doh","fish"],["la fruta","lah FROO-tah","fruit"],["el agua","ehl AH-gwah","water"]],
+ script:[
+ {t:"{greet}. ¿De dónde eres?",en:"{greetEn}. Where are you from?",ok:[["soy de"]],model:"Soy de Nigeria."},
+ {t:"¡Qué bien! Bienvenido al café. ¿Qué quiere?",en:"Great! Welcome to the café. What would you like?",ok:[["quiero"]],model:"Quiero un café, por favor."},
+ {t:"Muy bien. ¿Algo más?",en:"Very good. Anything else?",ok:[["nada mas"],["quiero"],["tambien"]],model:"Nada más, gracias."},
+ {t:"Son cuarenta y ocho pesos.",en:"That's 48 pesos.",ok:[["aqui tiene"],["aqui tienes"]],model:"Aquí tiene."},
+ {t:"Gracias. Ahora, pregúntame el precio del agua.",en:"Thanks. Now ask me the price of the water.",ok:[["cuanto cuesta"],["cuanto es"]],model:"¿Cuánto cuesta el agua?"},
+ {t:"El agua cuesta quince pesos. ¿Es caro o barato?",en:"The water costs 15 pesos. Is it expensive or cheap?",ok:[["barato"],["caro"]],model:"Es barato."},
+ {t:"¿Tiene sed?",en:"Are you thirsty?",ok:[["sed"]],model:"Sí, tengo sed. Quiero agua, por favor."},
+ {t:"¿Y tiene hambre?",en:"And are you hungry?",ok:[["hambre"]],model:"Sí, tengo hambre. Quiero pollo y arroz."},
+ {t:"Di en español:",en:"Say in Spanish:",task:"The bill, please",ok:[["la cuenta"]],model:"La cuenta, por favor."},
+ {t:"Aquí tiene la cuenta. Son setenta pesos. ¿Cuánto es?",en:"Here's the bill. It's 70 pesos. How much is it?",ok:[["setenta"]],model:"Setenta pesos."}]},
+{short:"4 · Familia",goal:"Review Lesson 3, then talk about your family and your work, and join ideas with y, pero and también.",
+ items:[
+ "Warm-up · Lesson 3 review",
+ ["¿Cuánto cuesta?","KWAHN-toh KWEHS-tah","How much is it?"],["Aquí tiene.","ah-KEE tee-EH-neh","Here you are."],
+ ["Sí, tengo sed.","see, TEHN-goh sehd","Yes, I'm thirsty."],
+ "Family",
+ ["la familia","lah fah-MEE-lyah","the family"],["mi padre","mee PAH-dreh","my father"],["mi madre","mee MAH-dreh","my mother"],
+ ["mi hermano","mee ehr-MAH-noh","my brother"],["mi hermana","mee ehr-MAH-nah","my sister"],["mi esposa","mee ehs-POH-sah","my wife"],
+ ["mi esposo","mee ehs-POH-soh","my husband"],["mi hijo","mee EE-hoh","my son"],["mi hija","mee EE-hah","my daughter"],["mis hijos","mees EE-hohs","my children"],
+ ["¿Tienes hermanos?","tee-EH-nehs ehr-MAH-nohs","Do you have brothers and sisters?"],["Tengo un hermano y una hermana.","TEHN-goh oon ehr-MAH-noh ee OO-nah ehr-MAH-nah","I have a brother and a sister."],
+ ["¿Tienes hijos?","tee-EH-nehs EE-hohs","Do you have children?"],["Tengo dos hijos.","TEHN-goh dohs EE-hohs","I have two children."],
+ ["Sí, estoy casado.","see, ehs-TOY kah-SAH-doh","Yes, I'm married."],["No, soy soltero.","noh, soy sohl-TEH-roh","No, I'm single."],
+ "Work",
+ ["¿En qué trabajas?","ehn keh trah-BAH-hahs","What do you do for work?"],["Soy ingeniero.","soy een-heh-NYEH-roh","I'm an engineer."],
+ ["Soy profesor.","soy proh-feh-SOHR","I'm a teacher."],["Soy gerente.","soy heh-REHN-teh","I'm a manager."],
+ ["Trabajo en una oficina.","trah-BAH-hoh ehn OO-nah oh-fee-SEE-nah","I work in an office."],["Me gusta mi trabajo.","meh GOOS-tah mee trah-BAH-hoh","I like my job."],
+ "Joining ideas",
+ ["y · pero · también","ee · PEH-roh · tahm-bee-EHN","and · but · also"],
+ ["Soy gerente y también soy profesor.","soy heh-REHN-teh ee tahm-bee-EHN soy proh-feh-SOHR","I'm a manager and I'm also a teacher."],
+ ["Me gusta mi trabajo, pero es mucho trabajo.","meh GOOS-tah mee trah-BAH-hoh, PEH-roh ehs MOO-choh trah-BAH-hoh","I like my job, but it's a lot of work."]],
+ script:[
+ {t:"{greet}. ¿Qué quiere?",en:"{greetEn}. What would you like?",ok:[["quiero"]],model:"Quiero un café, por favor."},
+ {t:"Son cuarenta pesos.",en:"That's 40 pesos.",ok:[["aqui tiene"],["aqui tienes"]],model:"Aquí tiene."},
+ {t:"Gracias. Oye, ¿tienes familia en Lagos?",en:"Thanks. Hey, do you have family in Lagos?",ok:[["tengo"],["no"]],model:"Sí, tengo familia en Lagos."},
+ {t:"¿Tienes hermanos?",en:"Do you have brothers or sisters?",ok:[["tengo"],["no"]],model:"Sí, tengo un hermano y una hermana."},
+ {t:"¿Tienes hijos?",en:"Do you have children?",ok:[["tengo"],["no"]],model:"Sí, tengo dos hijos."},
+ {t:"¿En qué trabajas?",en:"What do you do for work?",ok:[["soy"],["trabajo"]],model:"Soy ingeniero. Trabajo en una oficina."},
+ {t:"¿Te gusta tu trabajo?",en:"Do you like your job?",ok:[["gusta"]],model:"Sí, me gusta mi trabajo."},
+ {t:"Di en español:",en:"Say in Spanish:",task:"I like my job, but it's a lot of work",ok:[["me gusta","pero"]],model:"Me gusta mi trabajo, pero es mucho trabajo."},
+ {t:"Di en español:",en:"Say in Spanish:",task:"I'm a manager and also a teacher",ok:[["gerente","tambien","profesor"]],model:"Soy gerente y también soy profesor."},
+ {t:"Bueno, {name}, hasta luego.",en:"Well, {name}, see you later.",ok:[["hasta luego"],["adios"]],model:"¡Hasta luego!"}]}
+];
+
+/* ================= HELPERS ================= */
+const $=id=>document.getElementById(id);
+const store={get(k,d){try{const v=localStorage.getItem('hab_'+k);return v===null?d:JSON.parse(v)}catch(e){return d}},
+             set(k,v){try{localStorage.setItem('hab_'+k,JSON.stringify(v))}catch(e){}}};
+const esc=s=>String(s).replace(/[&<>"]/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function ctx(){const h=new Date().getHours();const nm=($('name').value||'').trim()||'amigo';
+  return{name:nm,greet:h<12?'Buenos días':h<19?'Buenas tardes':'Buenas noches',greetEn:h<12?'Good morning':h<19?'Good afternoon':'Good evening'}}
+function fill(s){const c=ctx();return String(s||'').replace(/\{(\w+)\}/g,(m,k)=>k in c?c[k]:m)}
+
+const UNITS=['cero','uno','dos','tres','cuatro','cinco','seis','siete','ocho','nueve','diez','once','doce','trece','catorce','quince',
+ 'dieciseis','diecisiete','dieciocho','diecinueve','veinte','veintiuno','veintidos','veintitres','veinticuatro','veinticinco',
+ 'veintiseis','veintisiete','veintiocho','veintinueve'];
+const TENS={3:'treinta',4:'cuarenta',5:'cincuenta',6:'sesenta',7:'setenta',8:'ochenta',9:'noventa'};
+function numWord(d){const n=parseInt(d,10);if(n<30)return UNITS[n];if(n===100)return'cien';
+  if(n<100){const t=TENS[Math.floor(n/10)],u=n%10;return u?t+' y '+UNITS[u]:t}return d}
+function norm(s){return' '+String(s).toLowerCase().normalize('NFD').replace(/[̀-ͯ]/g,'')
+  .replace(/\d+/g,d=>' '+numWord(d)+' ').replace(/[^a-z\s]/g,' ').replace(/\s+/g,' ').trim()+' '}
+function matches(alts,text){const t=norm(text);return alts.some(req=>req.every(p=>t.includes(' '+p+' ')))}
+function lev(a,b){const m=a.length,n=b.length;if(!m)return n;if(!n)return m;let p=[...Array(n+1).keys()];
+  for(let i=1;i<=m;i++){const c=[i];for(let j=1;j<=n;j++)c[j]=Math.min(p[j]+1,c[j-1]+1,p[j-1]+(a[i-1]===b[j-1]?0:1));p=c}return p[n]}
+/* colour each word of the model answer by whether it was heard */
+function grade(model,heard){
+  const H=norm(heard).trim().split(' ').filter(Boolean);const nameN=norm(ctx().name).trim();
+  let close=[];
+  const html=model.split(/\s+/).map(w=>{const n=norm(w).trim();if(!n)return esc(w);
+    if(n===nameN)return`<span class="w">${esc(w)}</span>`;
+    const parts=n.split(' ');
+    if(parts.every(p=>H.includes(p)))return`<span class="w hit">${esc(w)}</span>`;
+    if(parts.every(p=>H.some(h=>lev(h,p)<=(p.length>4?2:1)))){close.push(w.replace(/[¿?¡!.,]/g,''));return`<span class="w close">${esc(w)}</span>`}
+    return`<span class="w miss">${esc(w)}</span>`}).join(' ');
+  return{html,close}}
+
+/* ================= SETTINGS + VOICE ================= */
+const synth=window.speechSynthesis;let voices=[];
+$('name').value=store.get('name','Kayode');
+$('name').oninput=()=>{store.set('name',$('name').value.trim());renderListen()};
+$('rate').value=store.get('rate',0.8);
+const rateLabel=()=>{const r=+$('rate').value;$('rateVal').textContent=r<0.75?'very slow':r<0.95?'slow':'normal'};
+$('rate').oninput=()=>{rateLabel();store.set('rate',+$('rate').value)};rateLabel();
+$('showText').checked=store.get('showText',true);
+$('showText').onchange=()=>{store.set('showText',$('showText').checked);applyTextVisibility()};
+function vscore(v){const n=v.name.toLowerCase();let s=0;
+  if(/enhanced|premium|natural|neural|google/.test(n))s+=3;
+  if(/paulina|m[oó]nica|dalia|elvira|helena|sabina|juan|jorge/.test(n))s+=2;
+  if(/es-mx/i.test(v.lang))s+=1;return s}
+function loadVoices(){
+  if(!synth){$('warn').hidden=false;$('warn').textContent="This browser can't speak text. Open the app in Safari or Chrome.";return}
+  voices=synth.getVoices().filter(v=>/^es/i.test(v.lang)).sort((a,b)=>vscore(b)-vscore(a));
+  const sel=$('voice');
+  if(!voices.length){sel.innerHTML='<option value="">Default Spanish voice</option>';return}
+  const saved=store.get('voice',null);
+  sel.innerHTML=voices.map((v,i)=>`<option value="${i}">${esc(v.name)} (${esc(v.lang)})</option>`).join('');
+  const i=voices.findIndex(v=>v.name===saved);if(i>=0)sel.value=i;
+}
+loadVoices();if(synth&&'onvoiceschanged' in synth)synth.onvoiceschanged=loadVoices;setTimeout(loadVoices,800);
+$('voice').onchange=()=>{const v=voices[$('voice').value];if(v)store.set('voice',v.name)};
+function say(text,onend){
+  if(!synth){onend&&onend();return}
+  if(synth.speaking||synth.pending)synth.cancel();
+  const u=new SpeechSynthesisUtterance(text.replace(/[¿¡]/g,''));
+  u.lang='es-MX';const v=voices[$('voice').value];if(v){u.voice=v;u.lang=v.lang}
+  u.rate=+$('rate').value;let done=false;const fin=()=>{if(done)return;done=true;onend&&onend()};
+  u.onend=fin;u.onerror=fin;synth.speak(u);
+}
+
+/* ================= LESSON + MODE SWITCHING ================= */
+let L=store.get('lesson',0);if(!LESSONS[L])L=0;
+let mode=store.get('mode','listen');
+function renderChips(){
+  $('chips').innerHTML='';
+  LESSONS.forEach((l,i)=>{const b=document.createElement('button');b.type='button';b.setAttribute('role','tab');
+    b.setAttribute('aria-selected',i===L);const best=store.get('best'+i,null);
+    b.innerHTML=esc(l.short)+(best?`<small>Best ${best}</small>`:'<small>New</small>');
+    b.onclick=()=>{if(i===L)return;L=i;store.set('lesson',L);stopAll();renderAll()};$('chips').appendChild(b)});
+  const cur=$('chips').children[L];cur&&cur.scrollIntoView({inline:'nearest',block:'nearest'});
+}
+function setMode(m){mode=m;store.set('mode',m);stopAll();
+  $('mListen').setAttribute('aria-selected',m==='listen');$('mSpeak').setAttribute('aria-selected',m==='speak');
+  $('listen').hidden=m!=='listen';$('speak').hidden=m!=='speak';resetSpeak()}
+$('mListen').onclick=()=>setMode('listen');$('mSpeak').onclick=()=>setMode('speak');
+function renderAll(){renderChips();$('goal').textContent='Goal: '+LESSONS[L].goal;renderListen();setMode(mode)}
+function stopAll(){synth&&synth.cancel();stopListening(true);clearTimeout(advanceTimer);playingAll=false}
+
+/* ================= LISTEN ================= */
+let rows=[],phr=[],playingAll=false;
+function renderListen(){
+  const list=$('list');list.innerHTML='';rows=[];phr=[];
+  LESSONS[L].items.forEach(p=>{const li=document.createElement('li');
+    if(typeof p==='string'){li.className='head';li.textContent=p;list.appendChild(li);return}
+    const i=phr.length;const es=fill(p[0]),en=fill(p[2]);phr.push(es);rows.push(li);
+    li.innerHTML=`<button type="button" aria-label="Play ${esc(es)}"><span class="icon">▶</span><span class="txt"><span class="es">${esc(es)}</span><span class="say">${esc(p[1])}</span> · <span class="en">${esc(en)}</span></span></button>`;
+    li.querySelector('button').onclick=()=>{playingAll=false;playRow(i)};list.appendChild(li)});
+}
+function playRow(i,onend){rows.forEach(r=>r.classList.remove('playing'));const li=rows[i];li.classList.add('playing');
+  li.scrollIntoView({block:'nearest'});say(phr[i],()=>{li.classList.remove('playing');onend&&onend()})}
+$('playAll').onclick=()=>{stopAll();playingAll=true;let i=0;
+  const next=()=>{if(!playingAll||i>=phr.length){playingAll=false;return}const k=i++;playRow(k,()=>setTimeout(next,1800))};next()};
+
+/* ================= SPEAK (scripted conversation) ================= */
+const SR=window.SpeechRecognition||window.webkitSpeechRecognition;
+const PRAISE=['¡Muy bien!','¡Perfecto!','¡Excelente!','¡Eso es!'];
+let S=null,rec=null,listening=false,advanceTimer=null,lastSpoken='';
+function setStatus(t){$('status').textContent=t||''}
+function resetSpeak(){S=null;$('startCard').hidden=false;$('convo').hidden=true;$('endCard').hidden=true;$('dock').hidden=true;setStatus('')}
+function startConvo(){S={i:0,attempts:0,score:0,missed:[],phase:'ask'};
+  $('startCard').hidden=true;$('endCard').hidden=true;$('convo').hidden=false;$('dock').hidden=false;
+  $('typeRow').hidden=!!SR;$('typeToggle').hidden=!SR;
+  if(!SR)setStatus('This browser has no speech recognition. Tap the box and use your keyboard 🎤 instead.');
+  showStep('')}
+$('startBtn').onclick=startConvo;
+function step(){return LESSONS[L].script[S.i]}
+function applyTextVisibility(){const hide=!$('showText').checked&&S&&S.phase==='ask';$('tEs').classList.toggle('hidden-text',!!hide)}
+function showStep(prefix){
+  const st=step();S.attempts=0;S.phase='ask';
+  const line=(prefix?prefix+' ':'')+fill(st.t);lastSpoken=line;
+  $('tEs').textContent=line;
+  $('tTask').hidden=!st.task;$('tTask').textContent=st.task||'';
+  $('tEn').textContent=fill(st.en||'')+(st.task?' “'+st.task+'”':'');$('tEn').hidden=true;$('enBtn').textContent='English';
+  $('yText').innerHTML='<span class="muted">Tap 🎤 and answer in Spanish</span>';
+  $('fb').hidden=true;$('typeIn').value='';
+  const total=LESSONS[L].script.length;
+  $('progTxt').textContent=`Turn ${S.i+1} of ${total}`;$('progBar').style.width=(S.i/total*100)+'%';
+  $('mic').disabled=false;applyTextVisibility();setStatus(SR?'Tap 🎤 to answer':'');
+  $('convo').scrollIntoView({block:'start',behavior:'smooth'});
+  say(line);
+}
+$('replay').onclick=()=>{if(S)say(lastSpoken)};
+$('enBtn').onclick=()=>{const h=$('tEn').hidden;$('tEn').hidden=!h;$('enBtn').textContent=h?'Hide English':'English'};
+$('tEs').onclick=()=>{$('tEs').classList.remove('hidden-text')};
+
+function stopListening(silent){if(rec&&listening){try{silent?rec.abort():rec.stop()}catch(e){}}if(silent){listening=false;setMic(false)}}
+function setMic(on){$('mic').classList.toggle('on',on);$('mic').setAttribute('aria-label',on?'Stop listening':'Tap to answer');$('mic').textContent=on?'■':'🎤'}
+function listen(){
+  if(!S||S.phase==='done')return;
+  if(!SR){$('typeRow').hidden=false;$('typeIn').focus();return}
+  if(listening){rec.stop();return}
+  clearTimeout(advanceTimer);synth&&synth.cancel();
+  rec=new SR();rec.lang='es-MX';rec.interimResults=true;rec.maxAlternatives=3;rec.continuous=false;
+  let alts=null,err=null;
+  rec.onresult=e=>{const rs=[...e.results];
+    alts=rs.length===1?[...rs[0]].map(a=>a.transcript):[rs.map(r=>r[0].transcript).join(' ')];
+    $('yText').textContent=alts[0]};
+  rec.onerror=e=>{err=e.error};
+  rec.onend=()=>{listening=false;setMic(false);
+    if(alts&&alts[0].trim()){evaluate(alts);return}
+    if(err==='not-allowed'||err==='service-not-allowed'){
+      setStatus('Microphone or speech recognition is blocked. Allow it in Settings → Safari, or type your answer.');
+      $('typeRow').hidden=false;return}
+    if(err==='aborted')return;
+    setStatus("I didn't catch that. Tap 🎤 and try again.");$('yText').innerHTML='<span class="muted">Nothing heard yet</span>'};
+  try{rec.start();listening=true;setMic(true);setStatus('Listening… speak now, tap ■ when done');$('yText').innerHTML='<span class="muted">…</span>'}
+  catch(e){setStatus('Could not start the microphone. Type your answer instead.');$('typeRow').hidden=false}
+}
+$('mic').onclick=listen;
+$('typeToggle').onclick=()=>{const h=$('typeRow').hidden;$('typeRow').hidden=!h;if(h)$('typeIn').focus()};
+$('typeGo').onclick=()=>{const v=$('typeIn').value.trim();if(!v||!S||S.phase==='done')return;$('yText').textContent=v;evaluate([v])};
+$('typeIn').addEventListener('keydown',e=>{if(e.key==='Enter'){e.preventDefault();$('typeGo').click()}});
+$('hintBtn').onclick=()=>{if(!S)return;const m=fill(step().model).split(/\s+/);setStatus('Hint: '+m.slice(0,Math.min(2,m.length)).join(' ')+(m.length>2?' …':''))};
+
+function evaluate(alts){
+  const st=step();S.attempts++;
+  const hit=alts.find(a=>matches(st.ok,a));const heard=hit||alts[0];
+  $('yText').textContent=heard;$('tEs').classList.remove('hidden-text');
+  const model=fill(st.model);const g=grade(model,heard);
+  $('fbModel').innerHTML=g.html;$('fb').hidden=false;requestAnimationFrame(()=>$('fb').scrollIntoView({block:'nearest',behavior:'smooth'}));
+  const fb=$('fb');fb.classList.toggle('ok',!!hit);fb.classList.toggle('no',!hit);
+  $('nextBtn').hidden=true;$('skipBtn').hidden=!!hit;
+  if(hit){
+    S.phase='ok';if(S.attempts===1)S.score++;
+    $('fbTitle').textContent=S.attempts===1?'✓ ¡Muy bien!':'✓ ¡Eso es! Got it on try '+S.attempts;
+    const short=norm(heard).trim().split(' ').length<=Math.ceil(norm(model).trim().split(' ').length/2);
+    $('fbTip').textContent=g.close.length?'Close on: '+g.close.join(', ')+'. Tap “Hear the answer” and compare.'
+      :short?'Good. Next time try the full sentence.':'';
+    $('mic').disabled=true;setStatus('');
+    advanceTimer=setTimeout(()=>next(true),2200);
+  }else{
+    S.phase='retry';if(S.attempts===1)S.missed.push(model);
+    $('fbTitle').textContent='Not quite. Try again';
+    $('fbTip').textContent=g.close.length?'Close on: '+g.close.join(', ')+'. Listen to the answer, then say it again.'
+      :'Look at the model answer, then tap 🎤 and say it.';
+    if(S.attempts>=2){$('nextBtn').hidden=false;$('skipBtn').hidden=true;say('Se dice: '+model)}
+    else say('Casi. Intenta otra vez.');
+    setStatus('Tap 🎤 to try again');
+  }
+}
+$('hearBtn').onclick=()=>{if(S)say(fill(step().model))};
+$('skipBtn').onclick=()=>{if(!S)return;if(S.attempts===0)S.missed.push(fill(step().model));next(false)};
+$('nextBtn').onclick=()=>next(false);
+function next(praise){
+  clearTimeout(advanceTimer);stopListening(true);S.i++;
+  if(S.i>=LESSONS[L].script.length){finish();return}
+  showStep(praise?PRAISE[Math.floor(Math.random()*PRAISE.length)]:'');
+}
+function finish(){
+  S.phase='done';const total=LESSONS[L].script.length;
+  $('progBar').style.width='100%';$('convo').hidden=true;$('dock').hidden=true;$('endCard').hidden=false;setStatus('');
+  $('endScore').textContent=`${S.score} / ${total}`;
+  const prev=store.get('best'+L,null);const prevN=prev?+prev.split('/')[0]:-1;
+  if(S.score>prevN)store.set('best'+L,`${S.score}/${total}`);
+  $('endMsg').textContent=S.score===total?'Every answer right on the first try. ¡Excelente!'
+    :S.score>=total*0.7?'Good work. Practice the lines below, then go again.':'Keep going. Listen to the lines below, repeat them, and try again.';
+  const ul=$('endList');ul.innerHTML='';
+  [...new Set(S.missed)].forEach(m=>{const li=document.createElement('li');const b=document.createElement('button');b.type='button';
+    b.innerHTML=`<span class="icon">▶</span><span>${esc(m)}</span>`;b.onclick=()=>say(m);li.appendChild(b);ul.appendChild(li)});
+  $('endPractice').hidden=!S.missed.length;
+  $('nextLessonBtn').hidden=L>=LESSONS.length-1;
+  renderChips();say(S.score===total?'¡Excelente, '+ctx().name+'!':'¡Muy bien! Terminamos.');
+}
+$('againBtn').onclick=startConvo;
+$('nextLessonBtn').onclick=()=>{L=Math.min(L+1,LESSONS.length-1);store.set('lesson',L);renderAll();window.scrollTo(0,0)};
+
+renderAll();
+</script>
+</body>
+</html>
