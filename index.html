@@ -134,6 +134,7 @@ ul.phrases li.head{border-bottom:0;padding:18px 4px 6px;font-size:.75rem;text-tr
       <label for="name">Your name<input type="text" id="name" autocomplete="given-name"></label>
       <label for="voice">Voice<select id="voice"></select></label>
       <label for="rate">Speed: <span id="rateVal">slow</span><input id="rate" type="range" min="0.5" max="1.1" step="0.1" value="0.8"></label>
+      <label for="pause">Wait after I stop talking<select id="pause"><option value="1.5">1.5 seconds (quick)</option><option value="2.5">2.5 seconds</option><option value="4">4 seconds (relaxed)</option></select></label>
       <label class="check" for="showText"><input type="checkbox" id="showText" checked> Show the tutor's Spanish text (turn off for a listening challenge)</label>
     </div>
   </details>
@@ -380,6 +381,8 @@ function loadVoices(){
   sel.innerHTML=voices.map((v,i)=>`<option value="${i}">${esc(v.name)} (${esc(v.lang)})</option>`).join('');
   const i=voices.findIndex(v=>v.name===saved);if(i>=0)sel.value=i;
 }
+$('pause').value=String(store.get('pause',2.5));if(!$('pause').value)$('pause').value='2.5';
+$('pause').onchange=()=>store.set('pause',+$('pause').value);
 loadVoices();if(synth&&'onvoiceschanged' in synth)synth.onvoiceschanged=loadVoices;setTimeout(loadVoices,800);
 $('voice').onchange=()=>{const v=voices[$('voice').value];if(v)store.set('voice',v.name)};
 function say(text,onend){
@@ -461,22 +464,27 @@ function setMic(on){$('mic').classList.toggle('on',on);$('mic').setAttribute('ar
 function listen(){
   if(!S||S.phase==='done')return;
   if(!SR){$('typeRow').hidden=false;$('typeIn').focus();return}
-  if(listening){rec.stop();return}
+  if(listening){try{rec.stop()}catch(e){}return}
   clearTimeout(advanceTimer);synth&&synth.cancel();
-  rec=new SR();rec.lang='es-MX';rec.interimResults=true;rec.maxAlternatives=3;rec.continuous=false;
-  let alts=null,err=null;
-  rec.onresult=e=>{const rs=[...e.results];
-    alts=rs.length===1?[...rs[0]].map(a=>a.transcript):[rs.map(r=>r[0].transcript).join(' ')];
-    $('yText').textContent=alts[0]};
+  /* keep listening through short pauses; stop after a longer silence or when ■ is tapped */
+  rec=new SR();rec.lang='es-MX';rec.interimResults=true;rec.maxAlternatives=3;rec.continuous=true;
+  let alts=null,err=null,silence=null;
+  const waitMs=(+$('pause').value||2.5)*1000;
+  const stopIn=ms=>{clearTimeout(silence);silence=setTimeout(()=>{try{rec.stop()}catch(e){}},ms)};
+  rec.onresult=e=>{let finals=[],interim='',lastAlts=null;
+    for(const r of e.results){if(r.isFinal){finals.push(r[0].transcript);lastAlts=[...r].map(a=>a.transcript)}else interim+=' '+r[0].transcript}
+    const text=(finals.join(' ')+interim).replace(/\s+/g,' ').trim();
+    alts=(e.results.length===1&&lastAlts)?lastAlts:[text];
+    $('yText').textContent=text;stopIn(waitMs)};
   rec.onerror=e=>{err=e.error};
-  rec.onend=()=>{listening=false;setMic(false);
+  rec.onend=()=>{clearTimeout(silence);listening=false;setMic(false);
     if(alts&&alts[0].trim()){evaluate(alts);return}
     if(err==='not-allowed'||err==='service-not-allowed'){
       setStatus('Microphone or speech recognition is blocked. Allow it in Settings → Safari, or type your answer.');
       $('typeRow').hidden=false;return}
     if(err==='aborted')return;
     setStatus("I didn't catch that. Tap 🎤 and try again.");$('yText').innerHTML='<span class="muted">Nothing heard yet</span>'};
-  try{rec.start();listening=true;setMic(true);setStatus('Listening… speak now, tap ■ when done');$('yText').innerHTML='<span class="muted">…</span>'}
+  try{rec.start();listening=true;setMic(true);stopIn(10000);setStatus('Listening… take your time. Tap ■ when you finish');$('yText').innerHTML='<span class="muted">…</span>'}
   catch(e){setStatus('Could not start the microphone. Type your answer instead.');$('typeRow').hidden=false}
 }
 $('mic').onclick=listen;
